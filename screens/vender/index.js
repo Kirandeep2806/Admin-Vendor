@@ -42,7 +42,7 @@ export default () => {
           tabBarLabel: 'Publish',
           tabBarColor: BOTTOM_TAB_COLORS[0],
           tabBarIcon: ({ color }) => (
-            <Icon name="ios-cloud-upload" color={color} size={26} />
+            <Icon name="ios-cloud-upload" color={color} size={24} />
           ),
         }}
       />

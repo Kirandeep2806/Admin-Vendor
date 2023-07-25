@@ -1,26 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { Alert, ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import React, { useState, useEffect } from 'react'
+import { Alert, ActivityIndicator, ScrollView, StyleSheet } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
 import firebase from '../../../config/firebase'
-import {
-  Appbar,
-  Button,
-  TextInput,
-} from 'react-native-paper'
+import { Appbar, Button, TextInput } from 'react-native-paper'
 import { AuthContext } from '../../../auth/authContext'
 // import { sendNotifcation } from '../../../utils'
-import { BOTTOM_TAB_COLORS, ADMIN_VENDOR_SUB_COLLECT, VENDOR_SUB_COLLECT, ROOT_COLLECT_NAME } from '../../../constants'
+import {
+  BOTTOM_TAB_COLORS,
+  ADMIN_VENDOR_SUB_COLLECT,
+  VENDOR_SUB_COLLECT,
+  ROOT_COLLECT_NAME,
+} from '../../../constants'
 
-const db = firebase.firestore();
+const db = firebase.firestore()
 
 export default ({ navigation, route }) => {
-
   const { userData } = React.useContext(AuthContext)
   const [image, setImage] = useState(null)
   const [imageName, setImageName] = useState(null)
-  const [titleForImage, setTitleForImage] = useState("")
-  const [descriptionForImage, setDescriptionForImage] = useState("")
-  const [price, setPrice] = useState("")
+  const [titleForImage, setTitleForImage] = useState('')
+  const [descriptionForImage, setDescriptionForImage] = useState('')
+  const [price, setPrice] = useState('')
 
   const [pickImageDone, setPickImageDone] = React.useState(false)
 
@@ -28,17 +28,19 @@ export default ({ navigation, route }) => {
   const [publishDone, setPublishDone] = React.useState(false)
   const [publishErr, setPublishErr] = React.useState(false)
 
-  const data = route?.params?.data;
+  const data = route?.params?.data
 
   useEffect(() => {
-    ImagePicker.requestCameraRollPermissionsAsync().then(({ status }) => {
-      if (status !== 'granted') {
-        alert('Sorry, we need camera roll permissions to make this work!');
-      }
-    }).catch((e) => {
-      console.log("Error camera : ", e)
-    });
-  }, []);
+    ImagePicker.requestCameraRollPermissionsAsync()
+      .then(({ status }) => {
+        if (status !== 'granted') {
+          alert('Sorry, we need camera roll permissions to make this work!')
+        }
+      })
+      .catch(e => {
+        console.log('Error camera : ', e)
+      })
+  }, [])
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -46,86 +48,113 @@ export default ({ navigation, route }) => {
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
-    });
+    })
 
     if (!result.cancelled) {
       setPickImageDone(true)
-      setImage(result.uri);
-      let file_name = result.uri.split("/").pop()
-      setImageName(file_name.split(".")[0])
+      setImage(result.uri)
+      let file_name = result.uri.split('/').pop()
+      setImageName(file_name.split('.')[0])
     }
-  };
+  }
 
   const uploadImage = async (uri, imageName) => {
     const response = await fetch(uri)
     const blob = await response.blob()
-    const storageRef = firebase.storage().ref().child("VendorProducts/" + userData.email + "/" + titleForImage)
+    const storageRef = firebase
+      .storage()
+      .ref()
+      .child('VendorProducts/' + userData.email + '/' + titleForImage)
     return storageRef.put(blob)
   }
 
   const onClickUpload = () => {
     setPublishBegin(true)
-    uploadImage(image, imageName).then(() => {
-      console.log("Image inserted successfully with name " + titleForImage)
-      const docRef2 = db.collection(ROOT_COLLECT_NAME).doc(userData.email).collection(VENDOR_SUB_COLLECT).doc(`${data.productName}_${data.email}`);
+    uploadImage(image, imageName)
+      .then(() => {
+        console.log('Image inserted successfully with name ' + titleForImage)
+        const docRef2 = db
+          .collection(ROOT_COLLECT_NAME)
+          .doc(userData.email)
+          .collection(VENDOR_SUB_COLLECT)
+          .doc(`${data.productName}_${data.email}`)
 
-      const storageRef = firebase.storage().ref().child("VendorProducts/" + userData.email + "/" + titleForImage)
-      storageRef.getDownloadURL().then((url) => {
-        docRef2.set({
-          title: titleForImage,
-          description: descriptionForImage,
-          price: price,
-          url: url,
-          email: userData.email,
-          phone_no: userData.phone,
-          name: userData.name,
-          publisherMail: data.email,
-        })
+        const storageRef = firebase
+          .storage()
+          .ref()
+          .child('VendorProducts/' + userData.email + '/' + titleForImage)
+        storageRef
+          .getDownloadURL()
+          .then(url => {
+            docRef2
+              .set({
+                title: titleForImage,
+                description: descriptionForImage,
+                price: price,
+                url: url,
+                email: userData.email,
+                phone_no: userData.phone,
+                name: userData.name,
+                publisherMail: data.email,
+              })
+              .then(() => {
+                let locationRef = firebase
+                  .firestore()
+                  .collection(ROOT_COLLECT_NAME)
+                  .doc(data.email)
+                locationRef
+                  .collection(ADMIN_VENDOR_SUB_COLLECT)
+                  .doc(`${data.productName}_${data.email}`)
+                  .update({
+                    vendorEmail: firebase.firestore.FieldValue.arrayUnion(
+                      `${userData.email}`
+                    ),
+                  })
+                  .then(() => console.log('Email inserted successfully'))
+                  .catch(() => console.log('Error while inserting the email'))
+                // .then(() => {
+                //   if (data.status === true) {
+                //     locationRef
+                //       .get()
+                //       .then(doc__ => {
+                //         sendNotification(
+                //           doc__.data().token,
+                //           `Someone posted ${userData.productName}. Find who posted that!`,
+                //           "Want to know their details? Click Here",
+                //           '',
+                //         )
+                //         console.log(doc__.data().token)
+                //         console.log("Notification sent successfully")
+                //       }).catch(error => console.log("Error occured while sending the notification : ", error))
+                //   }
+                // }).catch(err => console.log("Error occured while inserting mail : ", err))
+                // setStartActivityIndicator(false)
+                Alert.alert('Success', 'Uploaded successfully...!')
+                console.log('image field is added and set to true')
+                navigation.navigate('home')
+              })
+              .catch(e => {
+                console.log(
+                  'Error occured while adding and setting the image field to true',
+                  e
+                )
+              })
+            console.log('Inserted successfully - 1')
+          })
           .then(() => {
-            let locationRef = firebase.firestore().collection(ROOT_COLLECT_NAME).doc(data.email)
-            locationRef.collection(ADMIN_VENDOR_SUB_COLLECT).doc(`${data.productName}_${data.email}`).update({
-              vendorEmail: firebase.firestore.FieldValue.arrayUnion(`${userData.email}`),
-            })
-              .then(() => console.log("Email inserted successfully"))
-              .catch(() => console.log("Error while inserting the email"))
-            // .then(() => {
-            //   if (data.status === true) {
-            //     locationRef
-            //       .get()
-            //       .then(doc__ => {
-            //         sendNotification(
-            //           doc__.data().token,
-            //           `Someone posted ${userData.productName}. Find who posted that!`,
-            //           "Want to know their details? Click Here",
-            //           '',
-            //         )
-            //         console.log(doc__.data().token)
-            //         console.log("Notification sent successfully")
-            //       }).catch(error => console.log("Error occured while sending the notification : ", error))
-            //   }
-            // }).catch(err => console.log("Error occured while inserting mail : ", err))
-            // setStartActivityIndicator(false)
-            Alert.alert("Success", "Uploaded successfully...!")
-            console.log("image field is added and set to true")
-            navigation.navigate("home")
+            console.log('Pushed successfully')
+            setPublishBegin(false)
+            setPublishDone(true)
           })
-          .catch((e) => {
-            console.log("Error occured while adding and setting the image field to true", e)
+          .catch(e => {
+            console.log('Error occured : ', e)
           })
-        console.log("Inserted successfully - 1")
-      }).then(() => {
-        console.log("Pushed successfully")
-        setPublishBegin(false)
-        setPublishDone(true)
-      }).catch(e => {
-        console.log("Error occured : ", e)
-      });
-
-    }).catch(error => {
-      console.log("Error occured", error)
-      Alert.alert("Alert", "Failed to upload Image")
-      setPublishErr(true)
-    })
+      })
+      .catch(error => {
+        console.log('Error occured', error)
+        Alert.alert('Alert', 'Failed to upload Image')
+        setPublishErr(true)
+      })
   }
 
   return (
@@ -159,16 +188,18 @@ export default ({ navigation, route }) => {
         />
         <Button
           onPress={pickImage}
-          icon='camera-plus-outline'
+          icon="camera-plus-outline"
           mode={pickImageDone ? 'contained' : 'outlined'}
           color={
-            pickImageDone ? BOTTOM_TAB_COLORS[4] : BOTTOM_TAB_COLORS[3]
+            pickImageDone
+              ? BOTTOM_TAB_COLORS[4]
+              : publishErr
+              ? BOTTOM_TAB_COLORS[3]
+              : BOTTOM_TAB_COLORS[4]
           }
           style={styles.textInput}
         >
-          {pickImageDone
-            ? 'Selected Image'
-            : 'Select Image'}
+          {pickImageDone ? 'Selected Image' : 'Select Image'}
         </Button>
 
         <Button
@@ -177,34 +208,38 @@ export default ({ navigation, route }) => {
             publishDone
               ? 'cloud-check'
               : publishErr
-                ? 'cloud-alert'
-                : 'cloud-upload'
+              ? 'cloud-alert'
+              : 'cloud-upload'
           }
           loading={publishBegin}
           mode={publishDone || publishErr ? 'contained' : 'outlined'}
           color={
-            publishDone ? BOTTOM_TAB_COLORS[4] : BOTTOM_TAB_COLORS[3]
+            publishDone
+              ? BOTTOM_TAB_COLORS[4]
+              : publishErr
+              ? BOTTOM_TAB_COLORS[3]
+              : BOTTOM_TAB_COLORS[4]
           }
           style={styles.textInput}
         >
           {publishBegin
             ? 'Uploading...'
             : publishDone
-              ? 'Uploaded'
-              : publishErr
-                ? 'Published Fail, try later'
-                : 'Upload'}
+            ? 'Uploaded'
+            : publishErr
+            ? 'Published Fail, try later'
+            : 'Upload'}
         </Button>
       </ScrollView>
     </>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 20
+    marginHorizontal: 20,
   },
   textInput: {
     marginVertical: 10,
-  }
+  },
 })

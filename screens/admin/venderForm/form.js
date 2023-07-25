@@ -20,12 +20,14 @@ import firebase from '../../../config/firebase'
 export default ({ navigation, route }) => {
   const data = route?.params
   const { userData } = React.useContext(AuthContext)
-  const [institute, setInstitute] = React.useState(data ? data.institutionName : '')
-  const [productName, setProductName] = React.useState(data ? data.productName : '')
-  const [place, setPlace] = React.useState(data ? data.place : '')
-  const [applicable, setApplicable] = React.useState(
-    data ? data.status : false
+  const [institute, setInstitute] = React.useState(
+    data ? data.institutionName : ''
   )
+  const [productName, setProductName] = React.useState(
+    data ? data.productName : ''
+  )
+  const [place, setPlace] = React.useState(data ? data.place : '')
+  const [applicable, setApplicable] = React.useState(data ? data.status : false)
   // up state
   const [publishBegin, setPublishBegin] = React.useState(false)
   const [publishDone, setPublishDone] = React.useState(false)
@@ -78,7 +80,8 @@ export default ({ navigation, route }) => {
       .collection(
         `${ROOT_COLLECT_NAME}/${userData.email}/${ADMIN_VENDOR_SUB_COLLECT}`
       )
-      .doc(`${productName}_${userData.email}`).set(getAllField())
+      .doc(`${productName}_${userData.email}`)
+      .set(getAllField())
       .then(() => {
         setPublishBegin(false)
         setPublishDone(true)
@@ -162,22 +165,26 @@ export default ({ navigation, route }) => {
                   publishDone
                     ? 'cloud-check'
                     : publishErr
-                      ? 'cloud-alert'
-                      : 'cloud-upload'
+                    ? 'cloud-alert'
+                    : 'cloud-upload'
                 }
                 loading={publishBegin}
                 mode={publishDone || publishErr ? 'contained' : 'outlined'}
                 color={
-                  publishDone ? BOTTOM_TAB_COLORS[4] : BOTTOM_TAB_COLORS[3]
+                  publishDone
+                    ? BOTTOM_TAB_COLORS[4]
+                    : publishErr
+                    ? BOTTOM_TAB_COLORS[3]
+                    : BOTTOM_TAB_COLORS[1]
                 }
               >
                 {publishBegin
                   ? 'Publishing...'
                   : publishDone
-                    ? 'Published'
-                    : publishErr
-                      ? 'Published Fail, try later'
-                      : 'Publish'}
+                  ? 'Published'
+                  : publishErr
+                  ? 'Published Fail, try later'
+                  : 'Publish'}
               </Button>
             </View>
           </ScrollView>

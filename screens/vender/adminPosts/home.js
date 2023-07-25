@@ -29,11 +29,6 @@
 //   },
 // })
 
-
-
-
-
-
 import React from 'react'
 import { View, StyleSheet, ActivityIndicator, FlatList } from 'react-native'
 import {
@@ -46,7 +41,11 @@ import {
   Paragraph,
 } from 'react-native-paper'
 import firebase from '../../../config/firebase'
-import { ADMIN_VENDOR_SUB_COLLECT, ROOT_COLLECT_NAME, BOTTOM_TAB_COLORS } from '../../../constants'
+import {
+  ADMIN_VENDOR_SUB_COLLECT,
+  ROOT_COLLECT_NAME,
+  BOTTOM_TAB_COLORS,
+} from '../../../constants'
 import { AuthContext } from '../../../auth/authContext'
 import { getAvatarText, getRandomColor } from '../../../utils'
 import * as Notifications from 'expo-notifications'
@@ -84,8 +83,8 @@ export default ({ navigation }) => {
                 temp.push({ key: doc.id, ...item, ...doc.data() })
               }
             })
+            setData(temp)
           }
-          setData(temp)
         })
     })
     setIsLoading(false)
@@ -125,6 +124,8 @@ export default ({ navigation }) => {
 
   return (
     <>
+      {console.log('VENDER DATA', data)}
+      {/* {console.log('TEMP VALUE', temp)} */}
       <Appbar.Header style={{ backgroundColor: BOTTOM_TAB_COLORS[4] }}>
         <Appbar.Action icon="menu" onPress={() => navigation.openDrawer()} />
         <Appbar.Content title="Admin Posts" />
@@ -134,46 +135,50 @@ export default ({ navigation }) => {
         />
       </Appbar.Header>
       <View style={styles.screen}>
-        {data.length > 0 ? (
-          <View style={styles.screen}>
-            <FlatList
-              data={data}
-              renderItem={({ item }) => (
-                <View style={styles.cardContainer}>
-                  <Card>
-                    <Card.Title
-                      title={item.name}
-                      subtitle={item.email}
-                      left={props => (
-                        <Avatar.Text
-                          {...props}
-                          label={getAvatarText(item.name)}
-                          backgroundColor={getRandomColor()}
-                        />
-                      )}
-                      right={props => (
-                        <IconButton
-                          {...props}
-                          icon="more"
-                          color="#999"
-                          onPress={() => navigation.navigate('info', item)}
-                        />
-                      )}
-                    />
-                    <Card.Content>
-                      <Title>{item.productName}</Title>
-                      <Paragraph>{item.institutionName}, {item.place}</Paragraph>
-                    </Card.Content>
-                  </Card>
-                </View>
-              )}
-            />
-          </View>
-        ) : (
+        {/* {data.length > 0 ?  */}
+        {/* ( */}
+        <View style={styles.screen}>
+          <FlatList
+            data={data}
+            renderItem={({ item }) => (
+              <View style={styles.cardContainer}>
+                <Card>
+                  <Card.Title
+                    title={item.name}
+                    subtitle={item.email}
+                    left={props => (
+                      <Avatar.Text
+                        {...props}
+                        label={getAvatarText(item.name)}
+                        backgroundColor={getRandomColor()}
+                      />
+                    )}
+                    right={props => (
+                      <IconButton
+                        {...props}
+                        icon="more"
+                        color="#999"
+                        onPress={() => navigation.navigate('info', item)}
+                      />
+                    )}
+                  />
+                  <Card.Content>
+                    <Title>{item.productName}</Title>
+                    <Paragraph>
+                      {item.institutionName}, {item.place}
+                    </Paragraph>
+                  </Card.Content>
+                </Card>
+              </View>
+            )}
+          />
+        </View>
+        {/* ) */}
+        {/* : (
             <View style={styles.noResultContainer}>
               <Text style={styles.noResultText}>No Posts</Text>
             </View>
-          )}
+          )} */}
       </View>
     </>
   )
